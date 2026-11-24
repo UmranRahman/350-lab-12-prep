@@ -1,3 +1,33 @@
-a.
-b.
-c.
+Observation (5000 balls, debug build): quadtree_accel ran at about 48 FPS
+and quadtree_no_accel at about 27 FPS. The quadtree version was about 1.8x
+faster because it only checks nearby balls instead of every pair.
+
+
+a. Insert points that get closer and closer to one corner of the square,
+like (0.375, 0.375), (0.1875, 0.1875), (0.09375, 0.09375), and so on (each
+one half of the last). Each new point lands in the same quadrant as the
+older ones, so every split leaves most points in one child. The tree becomes
+a long chain, like a list. In my code the depth stops at 8, so the last
+leaf just becomes a long list.
+Constant time query: a point far from the corner, like (0.9, 0.9). It
+reaches an almost empty node and checks very few points.
+O(n) query: a point near the corner, or a box covering the whole square.
+It has to go down the chain and check every point.
+
+
+b. If the same point is inserted again and again, the leaf splits after 8
+points but all the copies go into the same child, so it is still over the
+limit. Splitting can never separate identical points. In my code the depth
+limit of 8 stops the splitting, so the leaf grows into a long list and
+queries near it take O(n). Fix: store duplicates as one entry with a count,
+or do not split a leaf when all its points are identical.
+
+
+c. A quadtree is tied to fixed world coordinates. If everything is
+translated, objects cross cell boundaries and many move to different cells,
+and some may leave the root bounds. If everything is rotated, the boxes
+change shape and get bigger, so more objects straddle the center lines and
+most change cells. So the tree basically has to be rebuilt, which is about
+O(n log n). Quadtrees are good for evenly spread, small objects that move
+only a little each frame. They are bad for global transforms, clustered or
+duplicate points, and large objects.
